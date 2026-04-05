@@ -1,0 +1,85 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* --- Global Resets --- */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* PWA Safe Area Bottom Padding */
+.pb-safe {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}
+
+/* Hide Scrollbar but allow scrolling */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Tailwind v3 animate-in utility (shimmed) */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes zoomIn95 {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes slideInFromBottom4 {
+  from { opacity: 0; transform: translateY(1rem); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-in.fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+.animate-in.zoom-in-95 {
+  animation: zoomIn95 0.5s ease-out forwards;
+}
+.animate-in.slide-in-from-bottom-4 {
+  animation: slideInFromBottom4 0.5s ease-out forwards;
+}
+
+/* Print Styles */
+@media print {
+  body { background: white !important; color: black !important; }
+  .print\\:hidden { display: none !important; }
+  .print\\:bg-white { background: white !important; }
+  .print\\:text-black { color: black !important; }
+  .print\\:shadow-none { box-shadow: none !important; }
+  .print\\:border-slate-300 { border-color: #cbd5e1 !important; }
+  .print\\:border-none { border: none !important; }
+  .print\\:rounded-none { border-radius: 0 !important; }
+  .print\\:max-h-none { max-height: none !important; }
+  .print\\:overflow-visible { overflow: visible !important; }
+  .print\\:h-auto { height: auto !important; }
+  .print\\:p-0 { padding: 0 !important; }
+  .print\\:mb-4 { margin-bottom: 1rem !important; }
+  .print\\:relative { position: relative !important; }
+  .print\\:inset-auto { inset: auto !important; }
+  .print\\:bg-transparent { background: transparent !important; }
+  .print\\:backdrop-blur-none { backdrop-filter: none !important; }
+  .print\\:items-start { align-items: flex-start !important; }
+}
+
+/* Malayalam Serif Override */
+.font-serif {
+  font-family: 'Noto Serif Malayalam', serif !important;
+}
