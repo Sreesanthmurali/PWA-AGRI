@@ -5,7 +5,8 @@ import {
   ThermometerSun, FlaskConical, TestTube, 
   X, Sparkles, Send, Loader2, AlertTriangle,
   User, LogOut, ArrowRight, Info, CheckCircle2,
-  Clock, Search, Download, MapPin, Activity
+  Clock, Search, Download, MapPin, Activity,
+  RefreshCw
 } from 'lucide-react';
 
 // --- Kerala Context Data ---
@@ -885,6 +886,8 @@ export default function App() {
   const [connected, setConnected] = useState(false);
   const [connectionType, setConnectionType] = useState('none'); 
   const [isConnecting, setIsConnecting] = useState(false);
+  const [activeEndpoint, setActiveEndpoint] = useState(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [rawSensors, setRawSensors] = useState({ pH: 0, temp: 0, moisture: 0 });
   // NPK is always estimated from the 3 real sensors (pH, moisture, temp)
   const sensors = useMemo(() => {
@@ -996,6 +999,7 @@ export default function App() {
       setLoginForm({ name: '', phone: '', district: 'Ernakulam', elevation: 'Midland' });
       setConnected(false);
       setConnectionType('none');
+      setActiveEndpoint(null);
       if(pollIntervalId) clearInterval(pollIntervalId);
       setRawSensors({ pH: 0, temp: 0, moisture: 0 });
       setAnalysisHistory([]);
@@ -1040,6 +1044,7 @@ export default function App() {
     if (success) {
       setConnected(true);
       setConnectionType('real');
+      setActiveEndpoint(activeEndpoint);
       setShowConnectModal(false);
       
       const id = setInterval(async () => {
@@ -1050,6 +1055,7 @@ export default function App() {
           console.warn("Connection lost.");
           setConnected(false);
           setConnectionType('none');
+          setActiveEndpoint(null);
           clearInterval(id);
         }
       }, 30000);
@@ -1071,6 +1077,40 @@ export default function App() {
       setRawSensors({ pH: 5.8, temp: 28, moisture: 65 });
       setShowConnectModal(false);
     }, 1000);
+  };
+
+  const handleRefresh = async () => {
+    if (!connected) return;
+    setIsRefreshing(true);
+    if (connectionType === 'mock') {
+      setTimeout(() => {
+        const randomPH = parseFloat((5.2 + Math.random() * 1.6).toFixed(1));
+        const randomTemp = parseFloat((25 + Math.random() * 8).toFixed(1));
+        const randomMoisture = parseFloat((50 + Math.random() * 30).toFixed(1));
+        setRawSensors({ pH: randomPH, temp: randomTemp, moisture: randomMoisture });
+        setIsRefreshing(false);
+      }, 800);
+    } else if (connectionType === 'real') {
+      try {
+        const endpoint = activeEndpoint || '/data';
+        const response = await fetch(`http://${espIp}${endpoint}`);
+        if (response.ok) {
+          const data = await response.json();
+          setRawSensors(prev => ({ 
+            pH: data.pH ?? prev.pH, 
+            temp: data.temp ?? prev.temp, 
+            moisture: data.moisture ?? prev.moisture 
+          }));
+        } else {
+          alert(t.fetchError);
+        }
+      } catch (error) {
+        console.error("Refresh failed:", error);
+        alert(t.fetchError);
+      } finally {
+        setIsRefreshing(false);
+      }
+    }
   };
 
   const handleAnalyze = () => {
@@ -1579,10 +1619,17 @@ export default function App() {
                       {connected ? (connectionType === 'mock' ? 'Simulation Mode Active' : t.connected) : isConnecting ? t.connecting : t.disconnected}
                     </span>
                   </div>
-                  {!connected && (
-                    <button onClick={() => setShowConnectModal(true)} disabled={isConnecting} className="flex items-center space-x-1 bg-white text-emerald-700 px-3 py-1.5 rounded-lg text-sm font-bold shadow-sm active:scale-95 disabled:opacity-70">
-                      {isConnecting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wifi className="w-4 h-4" />}<span>Connect</span>
+                  {connected ? (
+                    <button onClick={handleRefresh} disabled={isRefreshing} className="flex items-center space-x-1 bg-white text-emerald-700 px-3 py-1.5 rounded-lg text-sm font-bold shadow-sm active:scale-95 disabled:opacity-70">
+                      <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                      <span>{isRefreshing ? (lang === 'en' ? 'Refreshing...' : 'പുതുക്കുന്നു...') : (lang === 'en' ? 'Refresh' : 'പുതുക്കുക')}</span>
                     </button>
+                  ) : (
+                    !connected && (
+                      <button onClick={() => setShowConnectModal(true)} disabled={isConnecting} className="flex items-center space-x-1 bg-white text-emerald-700 px-3 py-1.5 rounded-lg text-sm font-bold shadow-sm active:scale-95 disabled:opacity-70">
+                        {isConnecting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wifi className="w-4 h-4" />}<span>Connect</span>
+                      </button>
+                    )
                   )}
                 </div>
               </div>
